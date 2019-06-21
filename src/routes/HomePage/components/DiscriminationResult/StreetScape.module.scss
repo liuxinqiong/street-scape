@@ -1,0 +1,15 @@
+.streetScape {
+  display: flex;
+  .item {
+    transition: width 0.5s;
+    &:hover {
+      width: 200px !important;
+    }
+  }
+  .imageItem {
+    height: 140px;
+  }
+  .categoryItem {
+    height: 80px;
+  }
+}

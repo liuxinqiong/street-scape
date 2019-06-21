@@ -1,0 +1,45 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+.anchorBL {
+  display: none;
+}
+
+/* 定制样式 */
+.header-select {
+  .ant-select-selection {
+    background-color: #e2e2e2;
+    box-shadow: none !important;
+    border: none;
+  }
+  .ant-select-arrow {
+    color: #9d9d9d;
+  }
+}
+
+.header-option {
+  background-color: #e2e2e2;
+  &.ant-select-dropdown-menu-item-selected {
+    background-color: #9d9dcf !important;
+  }
+  &:hover {
+    background-color: #c2c2c2 !important;
+  }
+}
+
+.header-dropdown {
+  .ant-select-dropdown-menu-item:last-child {
+    border-radius: 0;
+  }
+}

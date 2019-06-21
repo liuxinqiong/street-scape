@@ -1,0 +1,14 @@
+.control {
+  position: absolute;
+  left: 40px;
+  bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  .icon {
+    font-size: 30px;
+    cursor: pointer;
+  }
+  .icon + .icon {
+    margin-top: 10px;
+  }
+}

@@ -1,0 +1,53 @@
+.header {
+  height: 120px;
+  display: flex;
+  align-items: center;
+  padding: 20px 40px;
+  .logo {
+    width: 60px;
+  }
+  .info {
+    margin-left: 20px;
+    width: 440px;
+    .company {
+      margin-bottom: 0;
+      margin-top: 10px;
+      font-size: 12px;
+    }
+    .beta {
+      float: right;
+      margin-right: 100px;
+    }
+  }
+  @media screen and (max-width: 1732px) {
+    .info {
+      display: none;
+    }
+    .logo {
+      margin-right: 40px;
+    }
+  }
+  .model {
+    padding-left: 10px;
+    padding-right: 10px;
+    border-left: 1px solid #E1E1E1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .stepName {
+    line-height: 16px;
+  }
+  .select {
+    width: 240px;
+  }
+  .selectLarge {
+    width: 500px;
+  }
+  @media screen and (max-width: 1450px) {
+    .selectLarge {
+      width: 360px;
+    }
+  }
+}

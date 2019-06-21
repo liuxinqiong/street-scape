@@ -1,0 +1,16 @@
+.dropdown {
+  background-color: transparent;
+  .normalButton {
+    background-color: #999;
+    border: none;
+    border-radius: 0;
+    color: #393939;
+  }
+  .evaluateButton {
+    background-color: #0000fe;
+    color: #fff;
+    float: right;
+    border: none;
+    border-radius: 0;
+  }
+}

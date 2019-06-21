@@ -1,0 +1,40 @@
+.footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 80px;
+  bottom: 0;
+  &.discriminationPanel {
+    transition: height 250ms;
+    height: 535px;
+    .discriminationEntry {
+      background-color: #FFF;
+    }
+    .icon {
+      color: #666666;
+    }
+  }
+  &.analysisPanel {
+    transition: height 250ms;
+    height: 810px;
+  }
+  .entry {
+    line-height: 40px;
+    text-align: center;
+    cursor: pointer;
+  }
+  .discriminationEntry {
+    background-color: #666;
+  }
+  .analysisEntry {
+    background-color: #282828;
+  }
+  .icon {
+    color: #FFF;
+    transition: transform 250ms;
+    font-size: 20px;
+  }
+  .iconRotate {
+    transform: rotate(180deg);
+  }
+}
