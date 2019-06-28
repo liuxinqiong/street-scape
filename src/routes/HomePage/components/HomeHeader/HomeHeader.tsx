@@ -36,7 +36,6 @@ function mapPanTo(map: any, lon: number, lat: number) {
 function addPointsOverlay(map: any, roads: Road[]) {
   const overlayMap = new Map();
   map.clearOverlays();
-  const overlays: any[] = [];
   roads.forEach(road => {
     road.points.forEach(point => {
       const key = road.id + '-' + point.id;
@@ -44,12 +43,10 @@ function addPointsOverlay(map: any, roads: Road[]) {
         new BMap.Point(...point.coord),
         DEFAULT_POINT_STYLE
       );
-      overlays.push(pointOverlay);
+      map.addOverlay(pointOverlay);
       overlayMap.set(key, pointOverlay);
     });
   });
-  var pointCollection = new BMap.PointCollection(overlays);
-  map.addOverlay(pointCollection);
   return overlayMap;
 }
 
