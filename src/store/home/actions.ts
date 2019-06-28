@@ -6,3 +6,10 @@ export function setMapInstance(map: any) {
     payload: map
   };
 }
+
+export function setClassifiedRoads(roads: any) {
+  return {
+    type: TYPES.SET_CLASSIFIED_ROADS,
+    payload: roads
+  };
+}

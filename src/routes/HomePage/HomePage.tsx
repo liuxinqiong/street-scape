@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './HomePage.module.scss';
-import Map from '../../components/Map/Map';
+import Map from 'components/Map/Map';
 import HomeFooter from './components/HomeFooter/HomeFooter';
 import HomeHeader from './components/HomeHeader/HomeHeader';
 

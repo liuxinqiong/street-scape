@@ -1,4 +1,4 @@
-.streetScape {
+.streetView {
   display: flex;
   .item {
     transition: width 0.5s;
@@ -8,6 +8,7 @@
   }
   .imageItem {
     height: 140px;
+    cursor: pointer;
   }
   .categoryItem {
     height: 80px;

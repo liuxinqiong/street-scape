@@ -7,42 +7,32 @@ type Props = {
   map: any;
 };
 
-class MapControl extends React.Component<Props> {
-  zoomIn() {
-    this.props.map.zoomIn();
+function MapControl(props: Props) {
+  const { map } = props;
+  if (!map) {
+    return null;
   }
-
-  zoomOut() {
-    this.props.map.zoomOut();
-  }
-
-  setViewport() {}
-
-  render() {
-    const { map } = this.props;
-    if (!map) {
-      return null;
-    }
-    return (
-      <div className={styles.control}>
-        <Icon
-          type="minus-circle"
-          className={styles.icon}
-          onClick={this.zoomOut.bind(this)}
-        />
-        <Icon
-          type="plus-circle"
-          className={styles.icon}
-          onClick={this.zoomIn.bind(this)}
-        />
-        <Icon
-          type="fullscreen-exit"
-          className={styles.icon}
-          onClick={this.setViewport.bind(this)}
-        />
-      </div>
-    );
-  }
+  return (
+    <div className={styles.control}>
+      <Icon
+        type="minus-circle"
+        theme="filled"
+        className={styles.icon}
+        onClick={() => {
+          map.zoomOut();
+        }}
+      />
+      <Icon
+        type="plus-circle"
+        className={styles.icon}
+        theme="filled"
+        onClick={() => {
+          map.zoomIn();
+        }}
+      />
+      <Icon type="fullscreen-exit" className={styles.icon} />
+    </div>
+  );
 }
 
 /* istanbul ignore next */

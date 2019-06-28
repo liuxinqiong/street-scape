@@ -42,4 +42,7 @@ code {
   .ant-select-dropdown-menu-item:last-child {
     border-radius: 0;
   }
+  > div:first-child {
+    background-color: #e2e2e2;
+  }
 }
