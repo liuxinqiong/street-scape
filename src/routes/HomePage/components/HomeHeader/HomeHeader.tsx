@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import styles from './HomeHeader.module.scss';
 import { Select, Icon } from 'antd';
-import Dropdown from './Dropdown';
+import Dropdown from '../Dropdown/Dropdown';
 import {
   getDistrictsByCity,
   getRoadsByDistrict,
@@ -9,111 +9,37 @@ import {
 } from 'api/road';
 import { bindActionCreators, Dispatch } from 'redux';
 import { connect } from 'react-redux';
-import { Road } from 'models/Road';
-import { PointOverlay } from 'utils/PointOverlay';
 import {
-  CategoryColors,
-  DEFAULT_POINT_STYLE,
-  HIGH_LIGHT_POINT_STYLE
-} from 'constants/colors';
-import { addStyle } from 'utils/dom';
-import { setClassifiedRoads } from 'store/root-action';
-
-declare const BMap: any;
+  setClassifiedRoads,
+  setClassifiedPointOverlays
+} from 'store/root-action';
+import {
+  mapPanTo,
+  findDistrictById,
+  addPointsOverlay,
+  updatePointsOverlay
+} from './HomeHeader.logic';
+import { transformToById } from 'utils/helper';
 
 const { Option } = Select;
-const districts = getDistrictsByCity();
+const districts = getDistrictsByCity(); // mock 数据
 
-const findDistrictById: any = (id: number) =>
-  districts.find(item => item.id === id);
-
-function mapPanTo(map: any, lon: number, lat: number) {
-  if (map) {
-    map.panTo(new BMap.Point(lon, lat));
-  }
+interface propsType {
+  map: any;
+  actions: {
+    setClassifiedRoads: Function;
+    setClassifiedPointOverlays: Function;
+  };
 }
 
-function addPointsOverlay(map: any, roads: Road[]) {
-  const overlayMap = new Map();
-  map.clearOverlays();
-  roads.forEach(road => {
-    road.points.forEach(point => {
-      const key = road.id + '-' + point.id;
-      const pointOverlay = new PointOverlay(
-        new BMap.Point(...point.coord),
-        DEFAULT_POINT_STYLE
-      );
-      map.addOverlay(pointOverlay);
-      overlayMap.set(key, pointOverlay);
-    });
-  });
-  return overlayMap;
-}
-
-function updatePointsOverlay(
-  map: any,
-  overlays: Map<any, any>,
-  roads: any,
-  oldIds: any,
-  newIds: any,
-  roadLabelMap: any
-) {
-  oldIds.forEach((id: number) => {
-    const road = roads.byId[id];
-    road.points.forEach((point: any) => {
-      const key = road.id + '-' + point.id;
-      const div = overlays.get(key)._div;
-      addStyle(div, DEFAULT_POINT_STYLE);
-    });
-    map.removeOverlay(roadLabelMap.get(id));
-  });
-  newIds.forEach((id: number) => {
-    const road = roads.byId[id];
-    let lonSum = 0;
-    let latSum = 0;
-    road.points.forEach((point: any) => {
-      lonSum += point.coord[0];
-      latSum += point.coord[1];
-      const key = road.id + '-' + point.id;
-      const div = overlays.get(key)._div;
-      addStyle(div, {
-        ...HIGH_LIGHT_POINT_STYLE,
-        backgroundColor: CategoryColors[point.category[0]]
-      });
-    });
-    // 添加文字标注
-    const point = new BMap.Point(
-      lonSum / road.points.length,
-      latSum / road.points.length
-    );
-    const label = new BMap.Label(road.name, {
-      position: point,
-      offset: new BMap.Size(20, -20)
-    });
-    label.setStyle({
-      color: 'white',
-      backgroundColor: '#0000FE',
-      border: 'none',
-      padding: '2px 8px'
-    });
-    roadLabelMap.set(road.id, label);
-    map.addOverlay(label);
-  });
-  return roadLabelMap;
-}
-
-function HomeHeader(props: any) {
+function HomeHeader(props: propsType) {
   const [selectedDistrict, setSelectedDistrict] = useState(districts[0]);
-  const [roads, setRoads] = useState<any>({ ids: [], byId: {} });
+  const [roads, setRoads] = useState<any>({ ids: [], byId: {} }); // 方便检索
   const [selectedRoadIds, setSelectedRoadIds] = useState<number[]>([]);
-  const pointOverlayMap = useRef<any>(new Map());
-  const roadLabelMap = useRef<any>(new Map());
+  const pointOverlayMapRef = useRef<any>(new Map());
+  const roadLabelMapRef = useRef<any>(new Map());
 
   function handleRoadSelectChange(newIds: number[]) {
-    if (!newIds.length) {
-      clearAll();
-      return;
-    }
     evalRoadsClassify(newIds).then(({ data }) => {
       const classifiedRoads: { [key: number]: any } = {};
       data.forEach(road => {
@@ -126,38 +52,46 @@ function HomeHeader(props: any) {
           ...classifiedRoads
         }
       };
-      roadLabelMap.current = updatePointsOverlay(
-        props.map,
-        pointOverlayMap.current,
-        allRoads,
+      const { existLabelsMap, highLightOverlays } = updatePointsOverlay(
+        allRoads.byId,
         selectedRoadIds,
         newIds,
-        roadLabelMap.current
+        props.map,
+        pointOverlayMapRef.current,
+        roadLabelMapRef.current
       );
+      roadLabelMapRef.current = existLabelsMap;
       setSelectedRoadIds(newIds);
       props.actions.setClassifiedRoads(classifiedRoads);
+      props.actions.setClassifiedPointOverlays(highLightOverlays);
     });
   }
 
   function districtSelectChange(value: number) {
-    setSelectedDistrict(findDistrictById(value));
+    setSelectedDistrict(findDistrictById(districts, value));
   }
 
   function roadSelectChange(value: any) {
+    if (!value.length) {
+      clearAll();
+      return;
+    }
     handleRoadSelectChange(value);
   }
 
   function clearAll() {
-    roadLabelMap.current = updatePointsOverlay(
-      props.map,
-      pointOverlayMap.current,
-      roads,
+    const { existLabelsMap } = updatePointsOverlay(
+      roads.byId,
       selectedRoadIds,
       [],
-      roadLabelMap.current
+      props.map,
+      pointOverlayMapRef.current,
+      roadLabelMapRef.current
     );
+    roadLabelMapRef.current = existLabelsMap;
     setSelectedRoadIds([]);
     props.actions.setClassifiedRoads({});
+    props.actions.setClassifiedPointOverlays([]);
   }
 
   function selectAll() {
@@ -170,17 +104,12 @@ function HomeHeader(props: any) {
     }
     getRoadsByDistrict(selectedDistrict.code).then(({ data }) => {
       // array to byId
-      const ids: Array<number> = [];
-      const byId: any = {};
-      data.forEach(road => {
-        ids.push(road.id);
-        byId[road.id] = road;
-      });
+      const { ids, byId } = transformToById(data);
       setRoads({
         ids,
         byId
       });
-      pointOverlayMap.current = addPointsOverlay(props.map, data);
+      pointOverlayMapRef.current = addPointsOverlay(props.map, data);
     });
     mapPanTo(props.map, selectedDistrict.lon, selectedDistrict.lat);
   }, [selectedDistrict, props.map]);
@@ -309,7 +238,10 @@ function mapStateToProps(state: any) {
 /* istanbul ignore next */
 function mapDispatchToProps(dispatch: Dispatch) {
   return {
-    actions: bindActionCreators({ setClassifiedRoads }, dispatch)
+    actions: bindActionCreators(
+      { setClassifiedRoads, setClassifiedPointOverlays },
+      dispatch
+    )
   };
 }
 

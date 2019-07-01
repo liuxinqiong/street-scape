@@ -22,6 +22,9 @@ module.exports = override(
     modifyVars: antdThemeConfig
   }),
   addBundleVisualizer({}, true),
+  addWebpackExternals({
+    BMap: 'BMap'
+  }),
   addWebpackAlias({
     // ['src']: path.resolve(__dirname, 'src')
   })

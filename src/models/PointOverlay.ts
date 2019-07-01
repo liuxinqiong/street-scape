@@ -1,4 +1,4 @@
-import { addStyle } from './dom';
+import { addStyle } from '../utils/dom';
 
 declare const BMap: any;
 
@@ -9,10 +9,14 @@ export class PointOverlay extends Overlay {
   private _map: any;
   private _div: any;
   private _style: any;
+  lat: number;
+  lng: number;
   constructor(point: any, style: any) {
     super();
     this._point = point;
     this._style = style;
+    this.lat = point.lat;
+    this.lng = point.lng;
   }
 
   initialize(map: any) {

@@ -1,62 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Icon, Empty } from 'antd';
 import { connect } from 'react-redux';
 import styles from './DiscriminationResult.module.scss';
-import CategoryPercent from './CategoryPercent';
-import StreetView from './StreetView';
-import { Road } from 'models/Road';
-import { CategoryColors } from 'constants/colors';
-import environment from 'environments/environment';
+import CategoryPercent from '../CategoryPercent/CategoryPercent';
+import { StreetView as StreetViewComp } from '../StreetView/StreetView';
+import {
+  normalizeViewData,
+  normalizeCategoryData,
+  findPointById
+} from './DiscriminationResult.logic';
+
+declare const BMap: any;
 
 type PropsType = {
   classifiedRoads: any;
+  map: any;
 };
-
-function normalizeViewData(road: Road) {
-  if (!road) {
-    return [];
-  }
-  return road.points.map(point => ({
-    id: point.id,
-    color: CategoryColors[point.category[0]],
-    src: `${environment.assertUrl}/pic?id=${point.pic_id}`
-  }));
-}
-
-function normalizeCategoryData(road: Road) {
-  if (!road) {
-    return [];
-  }
-  const category: any = {};
-  road.points.forEach(point => {
-    const [categoryId, categoryName] = point.category;
-    if (category[categoryId]) {
-      category[categoryId].count++;
-    } else {
-      category[categoryId] = {
-        id: categoryId,
-        name: categoryName,
-        color: CategoryColors[categoryId],
-        count: 1
-      };
-    }
-  });
-  return Object.values(category);
-}
 
 function DiscriminationResult(props: PropsType) {
   const [index, setIndex] = useState(0);
   const { classifiedRoads } = props;
   const keys = Object.keys(classifiedRoads);
   const length = keys.length;
-  const emptyText = '暂无数据，请点击街道进行分析';
   const road = classifiedRoads[keys[index]];
   const viewData = normalizeViewData(road);
   const categoryData = normalizeCategoryData(road);
+  const prevMarker = useRef(null);
 
-  // TODO
   function highLightClickPoint(id: number) {
-    console.log(id);
+    const { map } = props;
+
+    // 如果存在之前标注，则删除
+    if (prevMarker.current) {
+      map.removeOverlay(prevMarker.current);
+    }
+
+    const point: any = findPointById(road, id);
+    const marker = new BMap.Marker(new BMap.Point(...point.coord));
+    map.addOverlay(marker);
+    prevMarker.current = marker;
   }
 
   return (
@@ -84,7 +66,7 @@ function DiscriminationResult(props: PropsType) {
               )}
             </div>
             <div className={styles.content}>
-              <StreetView
+              <StreetViewComp
                 viewData={viewData}
                 highLightClickPoint={highLightClickPoint}
               />
@@ -110,7 +92,7 @@ function DiscriminationResult(props: PropsType) {
       ) : (
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description={emptyText}
+          description="暂无数据，请点击街道进行分析"
           className={styles.emptyTip}
         />
       )}

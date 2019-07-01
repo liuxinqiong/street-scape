@@ -1,148 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import styles from './AnalysisResult.module.scss';
-import { Icon, Table } from 'antd';
-import Echarts from 'components/Echarts/Echarts';
+import React, { useState, useEffect, useRef } from 'react';
+import { Icon, Table, Input, Empty } from 'antd';
 import { connect } from 'react-redux';
+
+import Echarts from 'components/Echarts/Echarts';
 import { ClassifiedRoadsType } from 'models/Road';
-import { CategoryColors } from 'constants/colors';
+import styles from './AnalysisResult.module.scss';
+import Bar from 'components/Bar/Bar';
+import { getEchartsOption, normalizeTableData } from './AnalysisResult.logic';
 
-function getEchartsOption(roads: ClassifiedRoadsType) {
-  const categoryMap = new Map<number, any>();
-  const ids = Object.keys(roads);
-  let totalCount = 0;
-  ids.forEach((id: any) => {
-    const road = roads[id];
-    totalCount += road.points.length;
-    road.points.forEach(point => {
-      const [categoryId, categoryName] = point.category;
-      const item = categoryMap.get(categoryId);
-      if (item) {
-        item.count++;
-      } else {
-        categoryMap.set(categoryId, {
-          categoryId: categoryId,
-          categoryName: categoryName,
-          count: 1
-        });
-      }
-    });
-  });
-  const categoryNames = [];
-  const data = [];
-  for (const category of categoryMap.values()) {
-    categoryNames.push(category.categoryName);
-    data.push({
-      value: category.count / totalCount,
-      itemStyle: {
-        color: CategoryColors[category.categoryId]
-      }
-    });
-  }
-  return {
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        // 坐标轴指示器，坐标轴触发有效
-        type: 'shadow' // 默认为直线，可选为：'line' | 'shadow'
-      }
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      containLabel: true
-    },
-    xAxis: [
-      {
-        type: 'category',
-        data: categoryNames,
-        axisTick: {
-          alignWithLabel: true
-        }
-      }
-    ],
-    yAxis: [
-      {
-        type: 'value'
-      }
-    ],
-    series: [
-      {
-        type: 'bar',
-        barWidth: '60%',
-        data: data
-      }
-    ]
-  };
-}
-
-function normalizeTableData(roads: ClassifiedRoadsType, colClassName: string) {
-  // 类别的并集
-  const categoryMap = new Map<number, any>();
-  const ids = Object.keys(roads);
-  const categoryIds = new Map<number, any>();
-  ids.forEach((id: any) => {
-    const road = roads[id];
-    const roadCategory = new Map();
-    road.points.forEach(point => {
-      const [categoryId, categoryName] = point.category;
-      categoryIds.set(categoryId, {
-        categoryId,
-        categoryName
-      });
-      const category = roadCategory.get(categoryId);
-      if (category) {
-        category.count++;
-      } else {
-        roadCategory.set(categoryId, {
-          categoryId,
-          categoryName,
-          color: CategoryColors[categoryId],
-          count: 1
-        });
-      }
-    });
-    categoryMap.set(road.id, roadCategory);
-  });
-  const columns: any[] = [
-    {
-      title: '道路名称',
-      dataIndex: 'name',
-      key: 'name',
-      className: colClassName
-    }
-  ];
-  for (const id of categoryIds.keys()) {
-    const category = categoryIds.get(id);
-    columns.push({
-      title: category.categoryName,
-      dataIndex: id,
-      key: id,
-      className: colClassName,
-      sortDirections: ['descend', 'ascend'],
-      sorter: (a: any, b: any) => a - b
-    });
-  }
-  const dataSource: any[] = [];
-  for (const roadId of categoryMap.keys()) {
-    const row: any = { key: roadId };
-    const roadCategory = categoryMap.get(roadId);
-    row.name = roads[roadId as any].name;
-    for (const id of categoryIds.keys()) {
-      const cate = roadCategory.get(id);
-      if (cate) {
-        row[id] = cate.count / roads[roadId as any].points.length;
-      } else {
-        row[id] = 0;
-      }
-    }
-    dataSource.push(row);
-  }
-  return {
-    columns,
-    dataSource
-  };
-}
+const { Search } = Input;
 
 type PropsType = {
   classifiedRoads: ClassifiedRoadsType;
@@ -150,16 +16,40 @@ type PropsType = {
 
 function AnalysisResult(props: PropsType) {
   const [showingIndex, setShowingIndex] = useState(0);
+  const length = Object.keys(props.classifiedRoads).length;
+  const columnsRef = useRef<any>([]);
+  const dataSourceRef = useRef<any>([]);
+  const [dataSource, setDataSource] = useState<any>([]);
   const panelStyle = {
     transform: `translateX(${-showingIndex + '00%'})`
   };
 
-  const { columns, dataSource } = normalizeTableData(
-    props.classifiedRoads,
-    styles.colClassName
-  );
+  useEffect(() => {
+    const { columns, dataSource } = normalizeTableData(props.classifiedRoads, {
+      colClassName: styles.colClassName,
+      render: (percent: number, color: string) => (
+        <Bar
+          style={{
+            width: percent * 100 + '%',
+            backgroundColor: color
+          }}
+        />
+      )
+    });
+    columnsRef.current = columns;
+    dataSourceRef.current = dataSource;
+    setDataSource(dataSource);
+  }, [props.classifiedRoads]);
 
   const echartsOption = getEchartsOption(props.classifiedRoads);
+
+  function filterDataSource(value: string) {
+    setDataSource(
+      dataSourceRef.current.filter(
+        (item: any) => item.name.indexOf(value) !== -1
+      )
+    );
+  }
 
   return (
     <div className={styles.panel}>
@@ -186,11 +76,15 @@ function AnalysisResult(props: PropsType) {
               <div className={styles.content}>
                 <div className={styles.top}>
                   <span className={styles.tableTitle}>排序 Ranking</span>
-                  {/* <Icon type="caret-up" className={styles.icon} /> */}
+                  <Search
+                    placeholder="道路标题 Street Name"
+                    onSearch={filterDataSource}
+                    style={{ width: 200 }}
+                  />
                 </div>
                 <Table
                   dataSource={dataSource}
-                  columns={columns}
+                  columns={columnsRef.current}
                   size="small"
                   rowClassName={() => styles.rowClassName}
                   className={styles.tableClassName}
@@ -203,13 +97,18 @@ function AnalysisResult(props: PropsType) {
                     emptyText: '暂无数据'
                   }}
                 />
-                {/* <div className={styles.bottom}>
-                  <Icon type="caret-down" className={styles.icon} />
-                </div> */}
               </div>
             </div>
             <div className={styles.chartsPanel}>
-              <Echarts className={styles.echarts} option={echartsOption} />
+              {length ? (
+                <Echarts className={styles.echarts} option={echartsOption} />
+              ) : (
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description="暂无数据，请点击街道进行分析"
+                  className={styles.emptyTip}
+                />
+              )}
             </div>
             <div className={styles.pairwisePanel}>
               <div className={styles.title}>

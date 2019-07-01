@@ -1,10 +1,11 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Icon } from 'antd';
 import styles from './MapControl.module.scss';
+import { PointOverlay } from 'models/PointOverlay';
 
 type Props = {
   map: any;
+  classifiedPointOverlays: PointOverlay[];
 };
 
 function MapControl(props: Props) {
@@ -14,23 +15,30 @@ function MapControl(props: Props) {
   }
   return (
     <div className={styles.control}>
-      <Icon
-        type="minus-circle"
-        theme="filled"
+      <img
+        src={require('assets/zoomout.png')}
+        alt=""
         className={styles.icon}
         onClick={() => {
           map.zoomOut();
         }}
       />
-      <Icon
-        type="plus-circle"
+      <img
+        src={require('assets/zoomin.png')}
+        alt=""
         className={styles.icon}
-        theme="filled"
         onClick={() => {
           map.zoomIn();
         }}
       />
-      <Icon type="fullscreen-exit" className={styles.icon} />
+      <img
+        src={require('assets/zoomauto.png')}
+        alt=""
+        className={styles.icon}
+        onClick={() => {
+          map.setViewport(props.classifiedPointOverlays);
+        }}
+      />
     </div>
   );
 }
@@ -38,7 +46,8 @@ function MapControl(props: Props) {
 /* istanbul ignore next */
 function mapStateToProps(state: any) {
   return {
-    map: state.home.map
+    map: state.home.map,
+    classifiedPointOverlays: state.home.classifiedPointOverlays
   };
 }
 

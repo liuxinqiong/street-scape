@@ -54,17 +54,16 @@
   }
   .content {
     .top {
-      text-align: center;
       position: relative;
       height: 45px;
       .tableTitle {
-        position: absolute;
-        left: 0;
         line-height: 45px;
+        margin-right: 20px;
       }
     }
     .tableClassName {
       border: 0;
+      // 重置 antd 部分样式
       :global {
         .ant-table-small {
           border: 0;
@@ -104,9 +103,6 @@
     .colClassName {
       border: 0;
     }
-    .bottom {
-      text-align: center;
-    }
   }
   .title {
     margin-top: 10px;
@@ -119,5 +115,13 @@
   }
   .pagination {
     color: #fff;
+  }
+  .emptyTip {
+    position: absolute;
+    color: #bcbcbc;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
   }
 }

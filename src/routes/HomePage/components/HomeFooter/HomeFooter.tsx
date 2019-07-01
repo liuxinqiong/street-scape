@@ -6,6 +6,7 @@ import AnalysisResult from '../AnalysisResult/AnalysisResult';
 
 export default function() {
   const [showingPanel, setShowingPanel] = useState('');
+
   function changeShowingPanel(name: string) {
     showingPanel && showingPanel === name
       ? setShowingPanel('')

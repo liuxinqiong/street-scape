@@ -12,7 +12,7 @@ type PropsType = {
   highLightClickPoint: Function;
 };
 
-export default function(props: PropsType) {
+export function StreetView(props: PropsType) {
   const { viewData, highLightClickPoint } = props;
   const cellWidth = 100 / viewData.length + '%';
 
@@ -26,9 +26,12 @@ export default function(props: PropsType) {
           />
           <div
             className={styles.imageItem}
-            style={{ background: `url(${item.src}) no-repeat center 0` }}
+            style={{
+              background: `url(${item.src}) no-repeat center 0`,
+              backgroundSize: 'auto 100%'
+            }}
             onClick={() => {
-              highLightClickPoint();
+              highLightClickPoint(item.id);
             }}
           />
         </div>
