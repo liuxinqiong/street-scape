@@ -1,6 +1,6 @@
 import { AxiosPromise } from 'axios';
 import axiosInstance from './axios';
-import { ROADS, ROAD_CLASSIFY } from './url';
+import { ROADS, ROAD_CLASSIFY, GET_POINT } from './url';
 import { districts } from './mock';
 import { District } from 'models/District';
 import { Road } from 'models/Road';
@@ -21,4 +21,8 @@ export function evalRoadsClassify(
   return axiosInstance.post(ROAD_CLASSIFY, {
     ids: roadIds
   });
+}
+
+export function getPoints(params: any) {
+  return axiosInstance.get(GET_POINT, { params });
 }

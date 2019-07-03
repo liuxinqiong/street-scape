@@ -18,7 +18,6 @@ export function findDistrictById(districts: District[], id: number): any {
 // 返回的 map 方便日后进行高亮处理
 export function addPointsOverlay(map: any, roads: Road[]) {
   const overlayMap = new Map<string, PointOverlay>();
-  map.clearOverlays();
   roads.forEach(road => {
     road.points.forEach(point => {
       const key = road.id + '-' + point.id;
@@ -31,6 +30,15 @@ export function addPointsOverlay(map: any, roads: Road[]) {
     });
   });
   return overlayMap;
+}
+
+export function clearPointOverlays(
+  map: any,
+  pointOverlaysMap: Map<any, PointOverlay>
+) {
+  for (const pointOverlay of pointOverlaysMap.values()) {
+    map.removeOverlay(pointOverlay);
+  }
 }
 
 export function updatePointsOverlay(
@@ -94,4 +102,25 @@ function createTextLabel(text: string, coord: number[]) {
     padding: '2px 8px'
   });
   return label;
+}
+
+export function normalizeRoadsData(points: any[]): Road[] {
+  const byName: any = {};
+  points.forEach((point: any) => {
+    const roadName: string = point.name;
+    const purePoint = {
+      coord: point.coord,
+      id: point.id
+    };
+    if (byName[roadName]) {
+      byName[roadName].points.push(purePoint);
+    } else {
+      byName[roadName] = {
+        id: roadName,
+        name: roadName,
+        points: [purePoint]
+      };
+    }
+  });
+  return Object.values(byName);
 }

@@ -1,12 +1,8 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import styles from './HomeHeader.module.scss';
-import { Select, Icon } from 'antd';
+import { Select, Icon, Button } from 'antd';
 import Dropdown from '../Dropdown/Dropdown';
-import {
-  getDistrictsByCity,
-  getRoadsByDistrict,
-  evalRoadsClassify
-} from 'api/road';
+import { evalRoadsClassify, getPoints } from 'api/road';
 import { bindActionCreators, Dispatch } from 'redux';
 import { connect } from 'react-redux';
 import {
@@ -14,15 +10,16 @@ import {
   setClassifiedPointOverlays
 } from 'store/root-action';
 import {
-  mapPanTo,
-  findDistrictById,
+  clearPointOverlays,
   addPointsOverlay,
-  updatePointsOverlay
+  updatePointsOverlay,
+  normalizeRoadsData
 } from './HomeHeader.logic';
 import { transformToById } from 'utils/helper';
+import { useDistrict } from './hooks/district.hook';
+import { District } from 'models/District';
 
 const { Option } = Select;
-const districts = getDistrictsByCity(); // mock 数据
 
 interface propsType {
   map: any;
@@ -33,9 +30,13 @@ interface propsType {
 }
 
 function HomeHeader(props: propsType) {
-  const [selectedDistrict, setSelectedDistrict] = useState(districts[0]);
+  const { districts, selectedDistrict, districtChange } = useDistrict(
+    props.map
+  );
   const [roads, setRoads] = useState<any>({ ids: [], byId: {} }); // 方便检索
   const [selectedRoadIds, setSelectedRoadIds] = useState<number[]>([]);
+  const [loading, setLoading] = useState(false);
+
   const pointOverlayMapRef = useRef<any>(new Map());
   const roadLabelMapRef = useRef<any>(new Map());
 
@@ -67,10 +68,6 @@ function HomeHeader(props: propsType) {
     });
   }
 
-  function districtSelectChange(value: number) {
-    setSelectedDistrict(findDistrictById(districts, value));
-  }
-
   function roadSelectChange(value: any) {
     if (!value.length) {
       clearAll();
@@ -98,21 +95,26 @@ function HomeHeader(props: propsType) {
     handleRoadSelectChange(roads.ids);
   }
 
-  useEffect(() => {
-    if (!props.map) {
-      return;
-    }
-    getRoadsByDistrict(selectedDistrict.code).then(({ data }) => {
-      // array to byId
-      const { ids, byId } = transformToById(data);
+  function getPointsFromArea() {
+    setLoading(true);
+    const center = props.map.getBounds().getCenter();
+
+    getPoints(center).then(({ data }) => {
+      const roads = normalizeRoadsData(data);
+      const { ids, byId } = transformToById(roads);
       setRoads({
         ids,
         byId
       });
-      pointOverlayMapRef.current = addPointsOverlay(props.map, data);
+      // 移除旧点
+      if (pointOverlayMapRef.current) {
+        clearPointOverlays(props.map, pointOverlayMapRef.current);
+      }
+      pointOverlayMapRef.current = addPointsOverlay(props.map, roads);
+      setSelectedRoadIds([]);
+      setLoading(false);
     });
-    mapPanTo(props.map, selectedDistrict.lon, selectedDistrict.lat);
-  }, [selectedDistrict, props.map]);
+  }
 
   return (
     <div className={styles.header}>
@@ -165,11 +167,11 @@ function HomeHeader(props: propsType) {
         </div>
         <Select
           value={selectedDistrict.id}
-          onSelect={districtSelectChange}
+          onSelect={districtChange}
           className={`header-select ${styles.select}`}
           suffixIcon={<Icon type="caret-down" />}
         >
-          {districts.map(district => {
+          {districts.map((district: any) => {
             return (
               <Option
                 value={district.id}
@@ -187,6 +189,9 @@ function HomeHeader(props: propsType) {
           <span style={{ color: '#FFF' }}>2. 街道对象 Target Street</span>
           <br />
           2.3 街道 Street
+          <Button type="link" onClick={getPointsFromArea} loading={loading}>
+            获取线框内道路信息
+          </Button>
         </div>
         <div
           onMouseDown={(e: any) => {
