@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Icon, Table, Input, Empty } from 'antd';
+import { Icon, Table, Input, Empty, Spin } from 'antd';
 import { connect } from 'react-redux';
 
 import Echarts from 'components/Echarts/Echarts';
@@ -7,11 +7,13 @@ import { ClassifiedRoadsType } from 'models/Road';
 import styles from './AnalysisResult.module.scss';
 import Bar from 'components/Bar/Bar';
 import { getEchartsOption, normalizeTableData } from './AnalysisResult.logic';
+import { correlationMatrix } from 'api/road';
 
 const { Search } = Input;
 
 type PropsType = {
   classifiedRoads: ClassifiedRoadsType;
+  selectedModel: string;
 };
 
 function AnalysisResult(props: PropsType) {
@@ -50,6 +52,23 @@ function AnalysisResult(props: PropsType) {
       )
     );
   }
+  const [correlationImg, setCorrelationImg] = useState();
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    const ids = Object.keys(props.classifiedRoads);
+    if (!ids.length) {
+      return;
+    }
+    setLoading(true);
+    correlationMatrix(props.selectedModel, ids)
+      .then(res => {
+        setCorrelationImg(`data:image/png;base64, ${res.data}`);
+        setLoading(false);
+      })
+      .catch(e => {
+        setLoading(false);
+      });
+  }, [props.classifiedRoads, props.selectedModel]);
 
   return (
     <div className={styles.panel}>
@@ -114,11 +133,23 @@ function AnalysisResult(props: PropsType) {
               <div className={styles.title}>
                 相关性分析 Pairwise Correlation
               </div>
-              <img
-                className={styles.pairwiseImage}
-                src="http://file.40017.cn/js40017cnproduct/cn/h/elong_pc/common/pic/20150120_ifold6.jpg"
-                alt=""
-              />
+              {length ? (
+                loading ? (
+                  <Spin size="large" className={styles.spin} />
+                ) : (
+                  <img
+                    className={styles.pairwiseImage}
+                    src={correlationImg}
+                    alt=""
+                  />
+                )
+              ) : (
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description="暂无数据，请点击街道进行分析"
+                  className={styles.emptyTip}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -141,7 +172,8 @@ function AnalysisResult(props: PropsType) {
 /* istanbul ignore next */
 function mapStateToProps(state: any) {
   return {
-    classifiedRoads: state.home.classifiedRoads
+    classifiedRoads: state.home.classifiedRoads,
+    selectedModel: state.home.selectedModel
   };
 }
 

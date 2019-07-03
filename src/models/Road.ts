@@ -8,7 +8,8 @@ export interface Point {
   coord: [number, number];
   id: number;
   category: [number, string];
-  pic_id: string;
+  pic: string;
+  district: string;
 }
 
 export interface ClassifiedRoadsType {

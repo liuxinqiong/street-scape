@@ -5,3 +5,11 @@ export const ROADS = function(districtName: string) {
 };
 
 export const GET_POINT = '/get_point';
+
+export const CLASSIFY = '/classify';
+
+export const UPLOAD = '/upload';
+
+export const FETCH_FILES = '/fetch_files';
+
+export const CORRELATION_MATRIX = '/correlation_matrix';

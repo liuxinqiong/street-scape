@@ -22,3 +22,10 @@ export function setClassifiedPointOverlays(pointOverlays: PointOverlay) {
     payload: pointOverlays
   };
 }
+
+export function setSelectedModel(model: string) {
+  return {
+    type: TYPES.SET_SELECTED_MODEL,
+    payload: model
+  };
+}

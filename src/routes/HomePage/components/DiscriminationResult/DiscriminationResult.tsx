@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Icon, Empty } from 'antd';
 import { connect } from 'react-redux';
 import styles from './DiscriminationResult.module.scss';
@@ -26,10 +26,9 @@ function DiscriminationResult(props: PropsType) {
   const viewData = normalizeViewData(road);
   const categoryData = normalizeCategoryData(road);
   const prevMarker = useRef(null);
+  const { map } = props;
 
   function highLightClickPoint(id: number) {
-    const { map } = props;
-
     // 如果存在之前标注，则删除
     if (prevMarker.current) {
       map.removeOverlay(prevMarker.current);
@@ -40,6 +39,14 @@ function DiscriminationResult(props: PropsType) {
     map.addOverlay(marker);
     prevMarker.current = marker;
   }
+
+  useEffect(() => {
+    return () => {
+      if (prevMarker.current) {
+        map.removeOverlay(prevMarker.current);
+      }
+    };
+  }, [map]);
 
   return (
     <div className={styles.panel}>

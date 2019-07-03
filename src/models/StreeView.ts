@@ -5,9 +5,9 @@ export class StreetView {
   id: number;
   color: string;
   src: string;
-  constructor(id: number, categoryId: number, pic_id: string) {
+  constructor(id: number, categoryId: number, district: string, pic: string) {
     this.id = id;
     this.color = CategoryColors[categoryId];
-    this.src = `${environment.assertUrl}/pic?id=${pic_id}`;
+    this.src = `${environment.assertUrl}/pic?district=${district}&id=${pic}`;
   }
 }

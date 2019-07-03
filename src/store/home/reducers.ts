@@ -6,12 +6,14 @@ type StateType = {
   map: any; // 地图实例
   classifiedRoads: ClassifiedRoadsType; // 已评估的街道 byId 类型数据集合
   classifiedPointOverlays: PointOverlay[]; // 已评估 BMap.Overlay 实例
+  selectedModel: string;
 };
 
 const initialState: StateType = {
   map: null,
   classifiedRoads: {},
-  classifiedPointOverlays: []
+  classifiedPointOverlays: [],
+  selectedModel: ''
 };
 
 export function homeReducer(state = initialState, action: any) {
@@ -22,6 +24,8 @@ export function homeReducer(state = initialState, action: any) {
       return { ...state, classifiedRoads: action.payload };
     case TYPES.SET_CLASSIFIED_POINT_OVERLAYS:
       return { ...state, classifiedPointOverlays: action.payload };
+    case TYPES.SET_SELECTED_MODEL:
+      return { ...state, selectedModel: action.payload };
     default:
       return initialState;
   }

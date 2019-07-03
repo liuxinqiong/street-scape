@@ -123,7 +123,7 @@ export function normalizeTableData(
       key: id,
       className: colClassName,
       sortDirections: ['descend', 'ascend'],
-      sorter: (a: any, b: any) => a - b,
+      sorter: (a: any, b: any) => a[id] - b[id],
       render: (percent: number) => render(percent, category.color)
     });
   }

@@ -12,10 +12,12 @@ export function normalizeViewData(road: Road) {
     const categoryId = point.category[0];
     const category = categoryMap.get(categoryId);
     if (category) {
-      category.push(new StreetView(point.id, categoryId, point.pic_id));
+      category.push(
+        new StreetView(point.id, categoryId, point.district, point.pic)
+      );
     } else {
       categoryMap.set(categoryId, [
-        new StreetView(point.id, categoryId, point.pic_id)
+        new StreetView(point.id, categoryId, point.district, point.pic)
       ]);
     }
   });

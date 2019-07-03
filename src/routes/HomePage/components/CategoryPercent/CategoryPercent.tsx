@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './CategoryPercent.module.scss';
+import { accDiv } from 'utils/calc';
 
 type PropsType = {
   className: string;
@@ -21,7 +22,7 @@ export default function(props: PropsType) {
             className={styles.colorItem}
             style={{ backgroundColor: item.color }}
           >
-            {(item.count / totalCount) * 100 + '%'}
+            {Math.round(accDiv(item.count, totalCount) * 100) + '%'}
           </div>
           <div className={styles.textItem}>{item.name}</div>
         </div>

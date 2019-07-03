@@ -1,13 +1,14 @@
 import React, { useState, useRef } from 'react';
 import styles from './HomeHeader.module.scss';
-import { Select, Icon, Button } from 'antd';
+import { Select, Icon, Button, Modal, Upload, message } from 'antd';
 import Dropdown from '../Dropdown/Dropdown';
-import { evalRoadsClassify, getPoints } from 'api/road';
+import { classify, getPoints } from 'api/road';
 import { bindActionCreators, Dispatch } from 'redux';
 import { connect } from 'react-redux';
 import {
   setClassifiedRoads,
-  setClassifiedPointOverlays
+  setClassifiedPointOverlays,
+  setSelectedModel
 } from 'store/root-action';
 import {
   clearPointOverlays,
@@ -17,7 +18,7 @@ import {
 } from './HomeHeader.logic';
 import { transformToById } from 'utils/helper';
 import { useDistrict } from './hooks/district.hook';
-import { District } from 'models/District';
+import useModel from './hooks/useModel';
 
 const { Option } = Select;
 
@@ -26,6 +27,7 @@ interface propsType {
   actions: {
     setClassifiedRoads: Function;
     setClassifiedPointOverlays: Function;
+    setSelectedModel: Function;
   };
 }
 
@@ -36,36 +38,16 @@ function HomeHeader(props: propsType) {
   const [roads, setRoads] = useState<any>({ ids: [], byId: {} }); // 方便检索
   const [selectedRoadIds, setSelectedRoadIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
+  const [visible, setVisible] = useState(false);
 
   const pointOverlayMapRef = useRef<any>(new Map());
   const roadLabelMapRef = useRef<any>(new Map());
+  const prevSelectedRoadIdsRef = useRef<number[]>([]);
+
+  const [loadingClassify, setLoadingClassify] = useState(false);
 
   function handleRoadSelectChange(newIds: number[]) {
-    evalRoadsClassify(newIds).then(({ data }) => {
-      const classifiedRoads: { [key: number]: any } = {};
-      data.forEach(road => {
-        // 分析后，多了 category 和 pic_id
-        classifiedRoads[road.id] = { ...roads.byId[road.id], ...road };
-      });
-      const allRoads = {
-        byId: {
-          ...roads.byId,
-          ...classifiedRoads
-        }
-      };
-      const { existLabelsMap, highLightOverlays } = updatePointsOverlay(
-        allRoads.byId,
-        selectedRoadIds,
-        newIds,
-        props.map,
-        pointOverlayMapRef.current,
-        roadLabelMapRef.current
-      );
-      roadLabelMapRef.current = existLabelsMap;
-      setSelectedRoadIds(newIds);
-      props.actions.setClassifiedRoads(classifiedRoads);
-      props.actions.setClassifiedPointOverlays(highLightOverlays);
-    });
+    setSelectedRoadIds(newIds);
   }
 
   function roadSelectChange(value: any) {
@@ -95,6 +77,38 @@ function HomeHeader(props: propsType) {
     handleRoadSelectChange(roads.ids);
   }
 
+  function evaluate() {
+    if (!selectedModel) {
+      message.error('请选择模型');
+      return;
+    }
+    setLoadingClassify(true);
+    classify(selectedModel, selectedRoadIds).then(({ data }) => {
+      const classifiedRoads: { [key: string]: any } = {};
+      data.forEach(road => {
+        // 分析后，多了 category 和 pic
+        classifiedRoads[road.name] = { ...roads.byId[road.name], ...road };
+      });
+      const allRoadsById = {
+        ...roads.byId,
+        ...classifiedRoads
+      };
+      const { existLabelsMap, highLightOverlays } = updatePointsOverlay(
+        allRoadsById,
+        prevSelectedRoadIdsRef.current,
+        selectedRoadIds,
+        props.map,
+        pointOverlayMapRef.current,
+        roadLabelMapRef.current
+      );
+      roadLabelMapRef.current = existLabelsMap;
+      prevSelectedRoadIdsRef.current = [...selectedRoadIds];
+      setLoadingClassify(false);
+      props.actions.setClassifiedRoads(classifiedRoads);
+      props.actions.setClassifiedPointOverlays(highLightOverlays);
+    });
+  }
+
   function getPointsFromArea() {
     setLoading(true);
     const center = props.map.getBounds().getCenter();
@@ -116,6 +130,12 @@ function HomeHeader(props: propsType) {
     });
   }
 
+  const { uploadProps, handleUpload, fileList, uploading, models } = useModel(
+    setVisible
+  );
+
+  const [selectedModel, setSelectedModel] = useState();
+
   return (
     <div className={styles.header}>
       <img
@@ -132,15 +152,35 @@ function HomeHeader(props: propsType) {
         </p>
       </div>
       <div className={styles.model}>
-        <div>1. 判别模型 Discrimination Model</div>
+        <div>
+          1. 判别模型 Discrimination Model
+          <br />
+          <Button
+            type="link"
+            className={styles.linkButton}
+            onClick={() => {
+              setVisible(true);
+            }}
+          >
+            上传模型
+          </Button>
+        </div>
         <Select
-          defaultValue="1"
+          onSelect={value => {
+            props.actions.setSelectedModel(value);
+            setSelectedModel(value);
+          }}
+          placeholder="点击选择模型 Click to select model"
           className={`header-select ${styles.select}`}
           suffixIcon={<Icon type="caret-down" />}
         >
-          <Option value="1" className="header-option">
-            业态类型 Venue Category
-          </Option>
+          {models.map(model => {
+            return (
+              <Option value={model} key={model} className="header-option">
+                {model}
+              </Option>
+            );
+          })}
         </Select>
       </div>
       <div className={styles.model}>
@@ -189,7 +229,12 @@ function HomeHeader(props: propsType) {
           <span style={{ color: '#FFF' }}>2. 街道对象 Target Street</span>
           <br />
           2.3 街道 Street
-          <Button type="link" onClick={getPointsFromArea} loading={loading}>
+          <Button
+            type="link"
+            onClick={getPointsFromArea}
+            loading={loading}
+            className={styles.linkButton}
+          >
             获取线框内道路信息
           </Button>
         </div>
@@ -214,7 +259,12 @@ function HomeHeader(props: propsType) {
             dropdownRender={menu => (
               <>
                 {menu}
-                <Dropdown clearAll={clearAll} selectAll={selectAll} />
+                <Dropdown
+                  clearAll={clearAll}
+                  selectAll={selectAll}
+                  evaluate={evaluate}
+                  loading={loadingClassify}
+                />
               </>
             )}
           >
@@ -229,6 +279,29 @@ function HomeHeader(props: propsType) {
           </Select>
         </div>
       </div>
+      <Modal
+        title="上传模型"
+        footer={null}
+        visible={visible}
+        onCancel={() => setVisible(false)}
+      >
+        <Upload {...uploadProps} accept=".json,.npy">
+          <Button>
+            <Icon type="upload" /> 选择文件
+          </Button>
+        </Upload>
+        <div>
+          <Button
+            type="primary"
+            onClick={handleUpload}
+            disabled={fileList.length === 0}
+            loading={uploading}
+            style={{ marginTop: 16 }}
+          >
+            {uploading ? '上传中' : '开始上传'}
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }
@@ -244,7 +317,7 @@ function mapStateToProps(state: any) {
 function mapDispatchToProps(dispatch: Dispatch) {
   return {
     actions: bindActionCreators(
-      { setClassifiedRoads, setClassifiedPointOverlays },
+      { setClassifiedRoads, setClassifiedPointOverlays, setSelectedModel },
       dispatch
     )
   };

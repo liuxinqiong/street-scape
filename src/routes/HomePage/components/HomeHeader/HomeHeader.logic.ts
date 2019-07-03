@@ -54,8 +54,11 @@ export function updatePointsOverlay(
     const road = roadsById[id];
     road.points.forEach((point: any) => {
       const key = road.id + '-' + point.id;
-      const div = existOverlaysMap.get(key)._div;
-      addStyle(div, DEFAULT_POINT_STYLE);
+      const overlays = existOverlaysMap.get(key);
+      if (overlays) {
+        const div = overlays._div;
+        addStyle(div, DEFAULT_POINT_STYLE);
+      }
     });
     map.removeOverlay(existLabelsMap.get(id));
   });
@@ -65,20 +68,26 @@ export function updatePointsOverlay(
     const road = roadsById[id];
     let lonSum = 0;
     let latSum = 0;
+    let count = 0;
     road.points.forEach((point: any) => {
-      lonSum += point.coord[0];
-      latSum += point.coord[1];
       const key = road.id + '-' + point.id;
+      // 路实际情况可能超出范围
       const overlay = existOverlaysMap.get(key);
-      const div = overlay._div;
-      addStyle(div, {
-        ...HIGH_LIGHT_POINT_STYLE,
-        backgroundColor: CategoryColors[point.category[0]]
-      });
-      highLightOverlays.push(overlay);
+      // 有些 point 没有对应街景分析
+      if (overlay && point.category) {
+        lonSum += point.coord[0];
+        latSum += point.coord[1];
+        count++;
+        const div = overlay._div;
+        addStyle(div, {
+          ...HIGH_LIGHT_POINT_STYLE,
+          backgroundColor: CategoryColors[point.category[0]]
+        });
+        highLightOverlays.push(overlay);
+      }
     });
     // 添加文字标注，暂定粗略取平均值
-    const coord = [lonSum / road.points.length, latSum / road.points.length];
+    const coord = [lonSum / count, latSum / count];
     const label = createTextLabel(road.name, coord);
     existLabelsMap.set(road.id, label);
     map.addOverlay(label);
@@ -123,4 +132,34 @@ export function normalizeRoadsData(points: any[]): Road[] {
     }
   });
   return Object.values(byName);
+}
+
+export function getFileFormat(fileUrl: string) {
+  const dotIndex = fileUrl.lastIndexOf('.');
+  return fileUrl.substring(dotIndex);
+}
+
+function getFileName(fileUrl: string) {
+  const dotIndex = fileUrl.lastIndexOf('.');
+  return fileUrl.substring(0, dotIndex);
+}
+
+export function validateUploadModelFiles(fileUrls: string[]) {
+  if (fileUrls.length !== 2) {
+    return false;
+  }
+  const typeList = ['.json', '.npy'];
+  const fileNames: string[] = [];
+  fileUrls.forEach(fileUrl => {
+    const format = getFileFormat(fileUrl);
+    fileNames.push(getFileName(fileUrl));
+    const index = typeList.findIndex(item => item === format);
+    if (index !== -1) {
+      typeList.splice(index, 1);
+    }
+  });
+  if (fileNames[0] !== fileNames[1]) {
+    return false;
+  }
+  return typeList.length === 0;
 }
