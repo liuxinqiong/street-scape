@@ -120,7 +120,7 @@ export function normalizeTableData(
     columns.push({
       title: category.categoryName,
       dataIndex: id,
-      key: id,
+      key: '__col__' + id,
       className: colClassName,
       sortDirections: ['descend', 'ascend'],
       sorter: (a: any, b: any) => a[id] - b[id],

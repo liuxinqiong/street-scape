@@ -29,8 +29,8 @@
     "typescript": "3.3.3"
   },
   "scripts": {
-    "start": "cross-env REACT_APP_ENV=dev react-app-rewired start",
-    "build": "react-app-rewired build",
+    "start": "cross-env REACT_APP_ENV=local react-app-rewired start",
+    "build": "cross-env REACT_APP_ENV=dev react-app-rewired build",
     "build:report": "react-app-rewired build --analyze",
     "test": "react-app-rewired test",
     "eject": "react-scripts eject",

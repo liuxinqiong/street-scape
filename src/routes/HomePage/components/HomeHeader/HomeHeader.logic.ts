@@ -1,5 +1,9 @@
 import { District } from 'models/District';
-import { DEFAULT_POINT_STYLE, HIGH_LIGHT_POINT_STYLE } from 'constants/styles';
+import {
+  DEFAULT_POINT_STYLE,
+  HIGH_LIGHT_POINT_STYLE,
+  EMPTY_POINT_STYLE
+} from 'constants/styles';
 import { PointOverlay } from 'models/PointOverlay';
 import { Road } from 'models/Road';
 import { addStyle } from 'utils/dom';
@@ -21,9 +25,10 @@ export function addPointsOverlay(map: any, roads: Road[]) {
   roads.forEach(road => {
     road.points.forEach(point => {
       const key = road.id + '-' + point.id;
+      const style = point.pics.length ? DEFAULT_POINT_STYLE : EMPTY_POINT_STYLE;
       const pointOverlay = new PointOverlay(
         new BMap.Point(...point.coord),
-        DEFAULT_POINT_STYLE
+        style
       );
       map.addOverlay(pointOverlay);
       overlayMap.set(key, pointOverlay);
@@ -119,7 +124,8 @@ export function normalizeRoadsData(points: any[]): Road[] {
     const roadName: string = point.name;
     const purePoint = {
       coord: point.coord,
-      id: point.id
+      id: point.id,
+      pics: point.pics
     };
     if (byName[roadName]) {
       byName[roadName].points.push(purePoint);

@@ -55,19 +55,27 @@ function AnalysisResult(props: PropsType) {
   const [correlationImg, setCorrelationImg] = useState();
   const [loading, setLoading] = useState(false);
   useEffect(() => {
+    let didCancel = false;
     const ids = Object.keys(props.classifiedRoads);
-    if (!ids.length) {
+    if (!ids.length || !props.selectedModel) {
       return;
     }
     setLoading(true);
     correlationMatrix(props.selectedModel, ids)
       .then(res => {
-        setCorrelationImg(`data:image/png;base64, ${res.data}`);
-        setLoading(false);
+        if (!didCancel) {
+          setCorrelationImg(`data:image/png;base64, ${res.data}`);
+          setLoading(false);
+        }
       })
       .catch(e => {
-        setLoading(false);
+        if (!didCancel) {
+          setLoading(false);
+        }
       });
+    return () => {
+      didCancel = true;
+    };
   }, [props.classifiedRoads, props.selectedModel]);
 
   return (

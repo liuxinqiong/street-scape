@@ -1,4 +1,9 @@
 export const environment = {
-  apiUrl: '//10.0.0.200:13331',
-  assertUrl: '//10.0.0.200:8331'
+  apiUrl: '/api',
+  assertUrl: ''
 };
+
+// export const environment = {
+//   apiUrl: '//10.10.100.71:13331',
+//   assertUrl: '//10.10.100.71:8899'
+// };

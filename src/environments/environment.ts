@@ -1,3 +1,4 @@
+import { environment as environmentLocal } from './environment.local';
 import { environment as environmentDev } from './environment.dev';
 
 interface configType {
@@ -5,6 +6,7 @@ interface configType {
 }
 
 const environmentConfig: configType = {
+  local: environmentLocal,
   dev: environmentDev
 };
 
